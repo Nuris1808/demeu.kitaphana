@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кітапхана</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #333;
+            color: white;
+        }
+        select, input, button {
+            padding: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .delete-btn {
+            background: red;
+        }
+        .delete-btn:hover {
+            background: darkred;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📚 Кітапхана</h1>
+
+    <h3>📖 Кітап қосу</h3>
+    <input type="text" id="title" placeholder="Кітап атауы">
+    <input type="text" id="author" placeholder="Автор">
+    <input type="text" id="genre" placeholder="Жанр">
+    <button onclick="addBook()">➕ Қосу</button>
+
+    <table>
+        <tr>
+            <th>Кітап атауы</th>
+            <th>Автор</th>
+            <th>Жанр</th>
+            <th>Күйі</th>
+            <th>Алып кеткен адам</th>
+            <th>🗑</th>
+        </tr>
+        <tbody id="booksTable"></tbody>
+    </table>
+
+    <script>
+        // Кітаптарды сақтау үшін массив
+        let books = [];
+
+        // Жаңа кітап қосу
+        function addBook() {
+            const title = document.getElementById("title").value.trim();
+            const author = document.getElementById("author").value.trim();
+            const genre = document.getElementById("genre").value.trim();
+
+            // Бос енгізулерді тексеру
+            if (!title || !author || !genre) {
+                alert("Барлық өрісті толтырыңыз!");
+                return;
+            }
+
+            // Жаңа кітапты массивке қосу
+            books.push({
+                title: title,
+                author: author,
+                genre: genre,
+                status: "available", // Әуелгі күйі – "Бар"
+                borrower: ""         // Алып кеткен адамның аты
+            });
+
+            // Сақтап, кестені жаңарту
+            saveBooks();
+            displayBooks();
+
+            // Енгізу өрістерін тазарту
+            document.getElementById("title").value = "";
+            document.getElementById("author").value = "";
+            document.getElementById("genre").value = "";
+        }
+
+        // Кітаптарды экранға шығару
+        function displayBooks() {
+            const tableBody = document.getElementById("booksTable");
+            tableBody.innerHTML = "";
+
+            books.forEach((book, index) => {
+                const row = document.createElement("tr");
+
+                // Кітаптың статусын select арқылы таңдаймыз
+                row.innerHTML = `
+                    <td>${book.title}</td>
+                    <td>${book.author}</td>
+                    <td>${book.genre}</td>
+                    <td>
+                        <select onchange="updateStatus(${index}, this.value)">
+                            <option value="available" ${book.status === "available" ? "selected" : ""}>Бар</option>
+                            <option value="unavailable" ${book.status === "unavailable" ? "selected" : ""}>Жоқ</option>
+                            <option value="borrowed" ${book.status === "borrowed" ? "selected" : ""}>Біреу алды</option>
+                        </select>
+                    </td>
+                    <td>${book.borrower ? book.borrower : ""}</td>
+                    <td><button class="delete-btn" onclick="deleteBook(${index})">❌</button></td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Кітаптың статусын жаңарту
+        function updateStatus(index, newStatus) {
+            // Егер "Біреу алды" болса, адамның атын сұраймыз
+            if (newStatus === "borrowed") {
+                const name = prompt("Кітапты алған адамның атын енгізіңіз:");
+                if (!name) {
+                    // Егер адам ештеңе енгізбесе, алдыңғы күйін қалдыру
+                    document.querySelectorAll("select")[index].value = books[index].status;
+                    return;
+                }
+                books[index].borrower = name;
+            } else {
+                // "Бар" немесе "Жоқ" болса, borrower-ді өшіреміз
+                books[index].borrower = "";
+            }
+
+            books[index].status = newStatus;
+            saveBooks();
+            displayBooks();
+        }
+
+        // Кітапты жою
+        function deleteBook(index) {
+            books.splice(index, 1);
+            saveBooks();
+            displayBooks();
+        }
+
+        // LocalStorage-қа сақтаймыз
+        function saveBooks() {
+            localStorage.setItem("books", JSON.stringify(books));
+        }
+
+        // LocalStorage-тан жүктейміз
+        function loadBooks() {
+            const storedBooks = localStorage.getItem("books");
+            if (storedBooks) {
+                books = JSON.parse(storedBooks);
+            }
+            displayBooks();
+        }
+
+        // Бет жүктелген кезде кітаптарды LocalStorage-тан аламыз
+        window.onload = loadBooks;
+    </script>
+
+</body>
+</html>
